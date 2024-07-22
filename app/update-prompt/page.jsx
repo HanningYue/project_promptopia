@@ -1,68 +1,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Form from "@components/Form";
+import { useSearchParams } from "next/navigation";
+import SuspenseWrapper from "@components/SuspenseWrapper";
 
-const UpdatePrompt = () => {
-  const router = useRouter();
+const UserProfile = ({ params }) => {
   const searchParams = useSearchParams();
-  const promptId = searchParams.get("id");
+  const userName = searchParams.get("name");
 
-  const [post, setPost] = useState({
-    prompt: "",
-    tag: "",
-  });
-  const [submitting, setSubmitting] = useState(false);
+  const [userPosts, setUserPosts] = useState([]);
 
   useEffect(() => {
-    const getPromptDetails = async () => {
-      const response = await fetch(`/api/prompt/${promptId}`);
+    const fetchPosts = async () => {
+      const response = await fetch(`/api/users/${params?.id}/posts`);
       const data = await response.json();
 
-      setPost({
-        prompt: data.prompt,
-        tag: data.tag,
-      });
+      setUserPosts(data);
     };
 
-    if (promptId) getPromptDetails();
-  }, [promptId]);
-
-  const updatePrompt = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-
-    if (!promptId) return alert("Prompt ID not found");
-
-    try {
-      const response = await fetch(`/api/prompt/${promptId}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          prompt: post.prompt,
-          tag: post.tag,
-        }),
-      });
-
-      if (response.ok) {
-        router.push("/");
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    if (params?.id) fetchPosts();
+  }, [params?.id]);
 
   return (
-    <Form
-      type="Edit"
-      post={post}
-      setPost={setPost}
-      submitting={submitting}
-      handleSubmit={updatePrompt}
-    />
+    <div>
+      <Profile
+        name={userName}
+        desc={`Welcome to ${userName}'s personalized profile page. Explore ${userName}'s exceptional prompts and be inspired by the power of their imagination`}
+        data={userPosts}
+      />
+    </div>
   );
 };
 
-export default UpdatePrompt;
+const UserProfileWithSuspense = (props) => (
+  <SuspenseWrapper>
+    <UserProfile {...props} />
+  </SuspenseWrapper>
+);
+
+export default UserProfileWithSuspense;
